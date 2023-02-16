@@ -81,11 +81,11 @@ def VisualOdometry(data, stereo_matcher='sgbm', detector='orb', matching='BF', G
     return trajectory, avr_fps
 
 
-# if __name__=="__main__":
-data = dataset(seq="00")
-trajectory, avr_fps = VisualOdometry(data=data, stereo_matcher='bm', detector='orb',
-                                     matching='BF', GoodP=True, dist_threshold=0.5, subset=100, plot=True)
-utils.visualize_trajectory(trajectory)
-print("mse:", utils.mse(data.gt, trajectory))
-print("average fps:", avr_fps)
-cv2.destroyAllWindows()
+if __name__=="__main__":
+    data = dataset(seq="00")
+    trajectory, avr_fps = VisualOdometry(data=data, stereo_matcher='bm', detector='orb',
+                                        matching='BF', GoodP=True, dist_threshold=0.5, subset=100, plot=True)
+    utils.visualize_trajectory(trajectory)
+    print("mse:", utils.mse(data.gt, trajectory))
+    print("average fps:", avr_fps)
+    cv2.destroyAllWindows()
