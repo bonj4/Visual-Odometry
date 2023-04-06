@@ -286,3 +286,15 @@ def estimate_motion(matches, kp1, kp2, k, depth1=None, max_depth=3000):
         _, rmat, tvec, mask = cv2.recoverPose(
             essential_matrix, image1_points, image2_points)
     return rmat, tvec, image1_points, image2_points
+
+
+
+def estimate_jerk(position,time_diff):
+    velocity = np.gradient(position, time_diff, axis=0)
+    acceleration = np.gradient(velocity, time_diff, axis=0)
+    jerk = np.gradient(acceleration, time_diff, axis=0)
+    jerk_mag = np.linalg.norm(jerk)
+    print(f'jerk estimation: {jerk_mag} m/s^3 ') 
+    jerk = np.nan_to_num(jerk, nan=0)
+    jerkX, jerkY, _ = jerk*10e8
+    return jerkX, jerkY, _ 
