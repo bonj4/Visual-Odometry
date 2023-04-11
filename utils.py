@@ -6,7 +6,7 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.gridspec as gridspec
-
+from random import randint
 
 def visualize_trajectory(trajectory):
     # Unpack X Y Z each trajectory point
@@ -55,6 +55,8 @@ def visualize_trajectory(trajectory):
 
     # Plot the figure
     fig = plt.figure(figsize=(8, 6), dpi=100)
+    fig.canvas.manager.window.wm_geometry("+0+0")
+
     gspec = gridspec.GridSpec(3, 3)
     ZY_plt = plt.subplot(gspec[0, 1:])
     YX_plt = plt.subplot(gspec[1:, 0])
@@ -130,7 +132,12 @@ def mse(ground_truth, estimated):
 
 def drawMatches(img1, img2, kp1, kp2, matches):
     merge_img = cv2.hconcat([img1, img2])
+    merge_img=cv2.cvtColor(merge_img,cv2.COLOR_GRAY2BGR)
     for m in matches:
+        r = randint(0, 255)
+        g = randint(0, 255)
+        b = randint(0, 255)
+        rand_color = (b,g,r)
         p1 = kp1[m.queryIdx]
         p2 = kp2[m.trainIdx]
 
@@ -138,8 +145,8 @@ def drawMatches(img1, img2, kp1, kp2, matches):
         x2, y2 = map(lambda x: int(round(x)), p2)
         cv2.circle(merge_img, (x1, y1), 3, (255))
 
-        cv2.circle(merge_img, (img1.shape[1]+x2, y2), 3, (255))
-        cv2.line(merge_img, (x1, y1), (img1.shape[1]+x2, y2), (255))
+        cv2.circle(merge_img, (img1.shape[1]+x2, y2), 3,rand_color)
+        cv2.line(merge_img, (x1, y1), (img1.shape[1]+x2, y2), rand_color)
     return merge_img
 
 

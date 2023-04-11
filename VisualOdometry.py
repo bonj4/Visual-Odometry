@@ -7,16 +7,17 @@ import os
 import time
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, Rectangle
-
+import sys
 
 def VisualOdometry(data, stereo_matcher='sgbm', detector='orb', matching='BF', GoodP=True, dist_threshold=0.5, subset=None, plot=False):
-    if subset is not None:
+    if subset !=-1:
         num_frame = subset
     else:
         num_frame = len(os.listdir(data.sequences_dir+"image_0"))
     if plot:
         # create figure
-        fig = plt.figure(figsize=(15, 7))
+        fig = plt.figure(figsize=(8, 6))
+        fig.canvas.manager.window.wm_geometry("+0+500")
         # set ax1 and ax1 variables
         ax1 = fig.add_subplot(1, 2, 1, projection='3d')
         ax1.set_title('Road Estimation')
@@ -25,12 +26,13 @@ def VisualOdometry(data, stereo_matcher='sgbm', detector='orb', matching='BF', G
         ys = data.gt[:, 1, 3]
         zs = data.gt[:, 2, 3]
         ax1.set_box_aspect((np.ptp(xs), np.ptp(ys), np.ptp(zs)))
-        ax1.plot(xs, ys, zs, c='k')
-        
+        ax1.plot(xs, ys, zs, c='k', label='Ground truth')
+        ax1.plot(0, 0, 0, c='chartreuse',label='Estimated')
+        ax1.legend( fontsize=8, ) 
         # set ax2 and ax2 variables
         ax2 = fig.add_subplot(1, 2, 2)
         ax2.set_title('Jerk Estimation')
-        text_obj = ax2.text(-3, 18, '', ha='right')
+        text_obj = ax2.text(11, 18, '', ha='right')
         ax2.set_xlim(-20, 20)
         ax2.set_ylim(-20, 20)
         ax2.set_aspect('equal')
@@ -96,7 +98,7 @@ def VisualOdometry(data, stereo_matcher='sgbm', detector='orb', matching='BF', G
             xs = trajectory[:idx+2, 0, 3]
             ys = trajectory[:idx+2, 1, 3]
             zs = trajectory[:idx+2, 2, 3]
-            ax1.plot(xs, ys, zs, c='chartreuse')
+            ax1.plot(xs, ys, zs, c='chartreuse',label='estimated')
 
             # updete ax2 variables
             rect.set_xy((jerkX-2, jerkY-2))
@@ -104,7 +106,12 @@ def VisualOdometry(data, stereo_matcher='sgbm', detector='orb', matching='BF', G
                 f"Jerk_mag= {np.linalg.norm([jerkX, jerkY]):0.4f}$*10e-8 ms^3$")
             plt.pause(1e-32)
             # show current left image
-            cv2.imshow("current_left", img2_left)
+            # cv2.imshow("current_left", img2_left)
+            matched_img=utils.drawMatches(img2_left, img2_right,kp1=kp1,kp2=kp2,matches=matches)
+            cv2.namedWindow("drawMatches")
+            cv2.moveWindow("drawMatches", 0, 0)
+            cv2.imshow("drawMatches", cv2.resize(matched_img, (0, 0), fx = 0.5, fy = 1))
+
             k = cv2.waitKey(30)
             if ord('q') == k:
                 cv2.destroyAllWindows()
@@ -113,17 +120,24 @@ def VisualOdometry(data, stereo_matcher='sgbm', detector='orb', matching='BF', G
     if plot:
         plt.close()
 
-    avr_fps = num_frame/total_time
+    avr_fps = idx/total_time
     return trajectory, avr_fps
 
 
-# if __name__=="__main__":
-data = dataset(seq="05")
-trajectory, avr_fps = VisualOdometry(data=data, stereo_matcher='sgbm', detector='orb',
-                                     matching='BF', GoodP=True, dist_threshold=0.5, subset=400, plot=True)
+if __name__=="__main__":
+    
+    if len(sys.argv)>1:
+        subset=int(sys.argv[1])
+        
+    else: subset=400
+    
+    data = dataset(seq="05")
+    trajectory, avr_fps = VisualOdometry(data=data, stereo_matcher='sgbm', detector='orb',
+                                        matching='BF', GoodP=True, dist_threshold=0.5, subset=subset, plot=True)
+    
+    cv2.destroyAllWindows()
+    
+    utils.visualize_trajectory(trajectory)
 
-utils.visualize_trajectory(trajectory)
-
-print("mse:", utils.mse(data.gt, trajectory))
-print("average fps:", avr_fps)
-cv2.destroyAllWindows()
+    print("mse:", utils.mse(data.gt, trajectory))
+    print("average fps:", avr_fps)
