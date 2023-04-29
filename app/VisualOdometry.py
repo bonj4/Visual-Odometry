@@ -1,4 +1,5 @@
 import utils
+from utils import Jerk
 from data import dataset
 import cv2
 import numpy as np
@@ -36,17 +37,27 @@ def VisualOdometry(data, stereo_matcher='sgbm', detector='orb', matching='BF', G
         ax2.set_xlabel('X axis')
         ax2.set_ylabel('Z axis')
         ax2.set_title('Jerk Estimation')
-        text_obj = ax2.text(-35, 32, '', ha='left')
+        text_est = ax2.text(-35, 40, '',color='b', ha='left')
+        text_gt = ax2.text(-35, 34, '',color='g', ha='left')
         ax2.set_xlim(-35, 35)
-        ax2.set_ylim(-35, 35)
+        ax2.set_ylim(-35, 45)
         ax2.set_aspect('equal')
         ellipse_static = Ellipse(
             xy=(0, 0), width=30, height=60, angle=0, alpha=0.5, fill=False, edgecolor='r')
         ax2.add_artist(ellipse_static)
         rect = Rectangle((-2, -2), 4, 4, linewidth=1,
                          edgecolor='b', fill=False)
+        rect_gt = Rectangle((-2, -2), 4, 4, linewidth=1,
+                    edgecolor='g', fill=False)
         ax2.add_artist(rect)
+        ax2.add_artist(rect_gt)
+
         fig.subplots_adjust(wspace=0.5)
+        
+    #create jerk object 
+    gt_jerk =Jerk()
+    est_jerk =Jerk()
+    
     # get images from dataset
     img1_left, img1_right = data.next_imgs()
 
@@ -96,20 +107,26 @@ def VisualOdometry(data, stereo_matcher='sgbm', detector='orb', matching='BF', G
         total_time += elapsed_time
         print('Time to compute frame {}:'.format(idx+1), elapsed_time)
 
-        vel, acc, jerk = utils.estimate_jerk(
+        vel_est, acc_est, jerk_est = est_jerk.estimate_jerk(
             position=T_tot[:-1, 3], elapsed_time=real_elapsed_time)
+        
+        vel_gt, acc_gt, jerk_gt= gt_jerk.estimate_jerk(
+            position=data.gt[idx, :, 3], elapsed_time=real_elapsed_time)
         if plot:
             # updete trajectory variables
             xs = trajectory[:idx+2, 0, 3]
             ys = trajectory[:idx+2, 1, 3]
             zs = trajectory[:idx+2, 2, 3]
-
+            print('graud trurth ',data.gt[idx, :, 3])
+            print('estimated',T_tot[:-1, 3])
             ax1.plot(xs, ys, zs, c='chartreuse', label='estimated')
-
+            rect_gt.set_xy((jerk_gt[0]-2, jerk_gt[2]-2))
+            text_gt.set_text(
+                f"jerk_gt_mag= {np.linalg.norm([jerk_gt[0],jerk_gt[2]]):0.2f}$ m/s^3$")
             # updete ax2 variables
-            rect.set_xy((jerk[0]-2, jerk[2]-2))
-            text_obj.set_text(
-                f"Jerk_mag= {np.linalg.norm([jerk[0],jerk[2]]):0.2f}$ m/s^3$")
+            rect.set_xy((jerk_est[0]-2, jerk_est[2]-2))
+            text_est.set_text(
+                f"jerk_est_mag= {np.linalg.norm([jerk_est[0],jerk_est[2]]):0.2f}$ m/s^3$")
             plt.pause(1e-32)
             # show current left image
             # cv2.imshow("current_left", img2_left)

@@ -294,26 +294,26 @@ def estimate_motion(matches, kp1, kp2, k, depth1=None, max_depth=3000):
             essential_matrix, image1_points, image2_points)
     return rmat, tvec, image1_points, image2_points
 
+class Jerk():
+    def __init__(self,):
+        self.prev_acc = np.zeros((3,))
+        self.prev_vel = np.zeros((3,))
+        self.prev_pos = np.zeros((3,))
 
-prev_acc = np.zeros((3,))
-prev_vel = np.zeros((3,))
-prev_pos = np.zeros((3,))
+    def estimate_jerk(self,position,elapsed_time):
+                # Calculate velocity for each axis using previous position data
+        vel = (position-self.prev_pos) / elapsed_time
+        
+        # # Calculate acceleration for each axis using previous velocity data
+        acc = (vel - self.prev_vel) / elapsed_time
 
-def estimate_jerk(position,elapsed_time):
-    global prev_acc, prev_vel ,prev_pos
-            # Calculate velocity for each axis using previous position data
-    vel = (position-prev_pos) / elapsed_time
-    
-    # # Calculate acceleration for each axis using previous velocity data
-    acc = (vel - prev_vel) / elapsed_time
-
-    # # Calculate jerk for each axis using previous acceleration data
-    jerk = (acc - prev_acc) / elapsed_time
-    prev_pos=position 
-    prev_vel = vel
-    prev_acc = acc
-    
-    # print(f'jerk estimation: {jerk_mag} m/s^3 ') 
-    jerk = np.nan_to_num(jerk, nan=0)
-    return vel,acc,jerk
+        # # Calculate jerk for each axis using previous acceleration data
+        jerk = (acc - self.prev_acc) / elapsed_time
+        self.prev_pos=position 
+        self.prev_vel = vel
+        self.prev_acc = acc
+        
+        # print(f'jerk estimation: {jerk_mag} m/s^3 ') 
+        jerk = np.nan_to_num(jerk, nan=0)
+        return vel,acc,jerk
      
