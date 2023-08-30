@@ -9,7 +9,7 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, Rectangle
 import sys
-
+from tqdm import tqdm
 
 def VisualOdometry(data, stereo_matcher='sgbm', detector='orb', matching='BF', GoodP=True, dist_threshold=0.5, subset=None, plot=False):
     if subset != -1:
@@ -69,7 +69,7 @@ def VisualOdometry(data, stereo_matcher='sgbm', detector='orb', matching='BF', G
     trajectory[0] = T_tot[:3, :]
     total_time = 0
     last_time = time.perf_counter()
-    for idx in range(num_frame-1):
+    for idx in tqdm(range(num_frame-1)):
         print('----------------------------------------------------')
         real_elapsed_time = data.times[idx+1]-data.times[idx]
         current_time = time.perf_counter()
